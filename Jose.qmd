@@ -1,0 +1,389 @@
+---
+title: "Jose"
+format: html
+---
+
+```{r}
+#| message: false
+library(tidyverse)
+library(tidymodels)
+library(vip)
+```
+
+# Data
+
+```{r}
+brfss <- read.csv("Data(random subset)/brfss_small.csv")
+uscdi <- read.csv("Data(random subset)/uscdi_small.csv")
+```
+
+```{r}
+head(brfss)
+head(uscdi)
+```
+
+# Clean Data
+
+```{r}
+ brfss_clean <- brfss |> 
+  transmute(
+    binge = X_RFBING6,   # outcome
+    genhlth = GENHLTH,
+    age_cat = X_AGEG5YR,
+    menthlth= MENTHLTH,
+    exerany = EXERANY2,
+    smokday = SMOKDAY2,
+    alcohol = ALCDAY4,
+    diabetes = DIABETE4,
+    edu  = EDUCA,
+    income = INCOME3,
+    marital = MARITAL,       
+    sex = X_SEX,         
+    vet = VETERAN3,      
+    state = X_STATE
+  ) |>
+  
+  mutate(
+    # binge drinking
+    binge = na_if(binge, 9L),
+    binge = factor(binge, levels = c(1, 2), labels = c("No", "Yes")),
+
+    # general health
+    genhlth = ifelse(genhlth %in% c(7, 9), NA, genhlth),
+    genhlth = factor(genhlth, levels = 1:5,
+                     labels = c("Excellent", "Very good", "Good", "Fair", "Poor"),
+                     ordered = TRUE),
+
+    # age categories
+    age_cat = na_if(age_cat, 14L),
+    age_cat = factor(age_cat, levels = 1:13,
+                     labels = c("18–24","25–29","30–34","35–39","40–44","45–49",
+                                "50–54","55–59","60–64","65–69","70–74","75–79","80+"),
+                     ordered = TRUE),
+
+    # mental health
+    menthlth = case_when(
+      menthlth %in% c(77, 99) ~ NA_real_,
+      menthlth == 88 ~ 0,
+      TRUE ~ as.numeric(menthlth)
+    ),
+
+    # exercise
+    exerany = ifelse(exerany %in% c(7, 9), NA, exerany),
+    exerany = factor(exerany, levels = c(1, 2), labels = c("Yes", "No")),
+
+    # smoking
+    smokday = ifelse(smokday %in% c(7, 9), NA, smokday),
+    smokday = factor(smokday,
+                     levels = c(1, 2, 3),
+                     labels = c("Every day", "Some days", "Not at all")),
+
+    # alcohol days
+    alcohol = case_when(
+      alcohol %in% c(777, 888, 999) ~ NA_real_,
+      between(alcohol, 101, 199) ~ (alcohol - 100) * (30/7),
+      between(alcohol, 201, 299) ~ alcohol - 200,
+      TRUE ~ NA_real_
+    ),
+
+    # diabetes
+    diabetes = ifelse(diabetes %in% c(7, 9), NA, diabetes),
+    diabetes = factor(diabetes,
+                      levels = c(1,2,3,4),
+                      labels = c("Yes","Gestational only",
+                                 "No","Prediabetes")),
+
+    # education level
+    educ = ifelse(educ %in% c(9), NA, educ),
+    educ = factor(educ, levels = 1:6, ordered = TRUE,
+                  labels = c("No school","Elementary","Some HS","HS grad",
+                             "Some college","College grad")),
+
+    # income level
+    income = ifelse(income %in% c(77, 99), NA, income),
+    income = factor(income,
+                    levels = 1:11,
+                    labels = c("<$10k","$10–15k","$15–20k","$20–25k","$25–35k",
+                               "$35–50k","$50–75k","$75–100k","$100–150k",
+                               "$150–200k",">$200k"),
+                    ordered = TRUE),
+    
+    # marital
+    marital = ifelse(marital %in% c(9), NA, marital),
+    marital = factor(marital,
+                     levels = c(1,2,3,4,5,6),
+                     labels = c("Married","Divorced","Widowed",
+                                "Separated","Never married",
+                                "Unmarried couple")),
+
+    # sex
+    sex = factor(sex,
+                 levels = c(1, 2),
+                 labels = c("Male", "Female")),
+
+    # veteran status
+    vet = ifelse(vet %in% c(7, 9), NA, vet),
+    vet = factor(vet,
+                 levels = c(1, 2),
+                 labels = c("Yes", "No")),
+
+    # state
+    state = factor(state)
+  ) |>
+  drop_na()
+```
+
+# Modeling
+
+```{r}
+set.seed(551)
+
+# train/test
+data_split <- initial_split(brfss_clean, prop = 0.8)
+train_data <- training(data_split)
+test_data  <- testing(data_split)
+
+# cv
+cv_folds <- vfold_cv(train_data, v = 5)
+
+# recipe
+brfss_recipe <- recipe(binge ~ ., data = train_data) |>
+  step_naomit(all_predictors()) |>
+  step_normalize(all_numeric_predictors()) |> 
+  step_dummy(all_nominal_predictors())  
+```
+
+## Logistic Regression
+
+```{r}
+# model spec
+lasso_spec <- logistic_reg(penalty = tune(), 
+                           mixture = tune()) |>
+  set_engine("glmnet")|>
+  set_mode("classification")
+
+# grid
+lasso_grid <- grid_regular(
+  penalty(),
+  mixture(),
+  levels = 5
+)
+
+# workflow
+lasso_wflow <- workflow() |>
+  add_recipe(brfss_recipe) |>
+  add_model(lasso_spec)
+
+# cv fit
+lasso_fit <- lasso_wflow |>
+  tune_grid(
+    grid = lasso_grid,
+    resamples = cv_folds
+    )
+
+# metrics
+lasso_fit |> 
+  collect_metrics() |>
+  filter(.metric == "roc_auc")
+
+# best params
+best_lasso <- select_best(lasso_fit, metric = "roc_auc")
+
+# final workflow
+final_lasso_wflow <- lasso_wflow |>
+  finalize_workflow(best_lasso)
+
+# final fit
+final_lasso_fit <- final_lasso_wflow |>
+  fit(data = train_data)
+```
+
+```{r}
+tidy(final_lasso_fit) |> 
+  filter(estimate != 0)
+```
+
+## Random Forest
+
+```{r}
+# model spec
+rf_model <- rand_forest(
+  mtry  = tune(),
+  trees = 500,
+  min_n = tune()
+) |>
+  set_engine("ranger", importance = "impurity") |>
+  set_mode("classification")
+
+# grid
+rf_grid <- grid_regular(
+  mtry(c(1, 13)),
+  min_n()
+)
+
+# workflow
+rf_wflow <- workflow() |>
+  add_recipe(rf_recipe) |>
+  add_model(rf_model)
+
+# cv fit
+rf_fit <- rf_wflow |>
+  tune_grid(
+    grid = rf_grid,
+    resamples = cv_folds
+    ) 
+
+# metrics
+rf_fit |> 
+  collect_metrics() |>
+  filter(.metric == "roc_auc") 
+
+# best params
+best_rf <- select_best(rf_fit, metric = "roc_auc")
+
+# final workflow
+final_rf_wflow <- rf_wflow |>
+  finalize_workflow(best_rf)
+
+# final fit
+final_rf_fit <- final_rf_wflow |>
+  fit(data = train_data)
+```
+
+```{r}
+final_rf_fit |>
+  extract_fit_parsnip() |>
+  vip(num_features = 15, bar = TRUE, geom = "col") +
+  labs(
+    title = "Top Predictors of Binge Drinking (Random Forest)",
+    subtitle = "BRFSS 2024"
+  ) +
+  theme_minimal(base_size = 14)
+
+```
+
+# Plots
+
+# CDI
+
+```{r}
+# Remove BRFSS rows
+uscdi_nobrfs <- uscdi |>
+  filter(DataSource != "BRFSS")
+
+# Keep only the liver disease mortality indicator
+target_question <- 
+  "Chronic liver disease mortality among all people, underlying cause"
+
+uscdi_alcohol <- uscdi_nobrfs |>
+  filter(Question == target_question)
+
+# Keep only overall values (no race/sex splits)
+uscdi_alcohol <- uscdi_alcohol |>
+  filter(StratificationCategory1 == "Overall")
+
+# Convert DataValue to numeric
+uscdi_alcohol <- uscdi_alcohol |>
+  mutate(
+    DataValue = as.numeric(gsub(",", "", na_if(DataValue, "")))
+  ) |>
+  drop_na(DataValue)
+
+# Keep only what we need
+uscdi_clean <- uscdi_alcohol |>
+  select(
+    State = LocationAbbr,
+    Year = YearStart,
+    Question,
+    Mortality = DataValue
+  )
+
+# If multiple years exist, average them
+uscdi_state <- uscdi_clean |>
+  group_by(State) |>
+  summarise(
+    Mortality = mean(Mortality, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Create HighBurden (top 25% of states)
+uscdi_state <- uscdi_state |>
+  mutate(
+    HighBurden = ifelse(
+      Mortality > quantile(Mortality, 0.75, na.rm = TRUE),
+      "High", "Low"
+    ),
+    HighBurden = factor(HighBurden, levels = c("Low", "High"))
+  )
+
+```
+
+## Modeling
+
+```{r}
+# ensure HighBurden is a factor
+uscdi_state <- uscdi_state |>
+  mutate(
+    HighBurden = factor(HighBurden, levels = c("Low", "High"))
+  )
+
+# train/test split
+data_split <- initial_split(uscdi_state, prop = 0.8)
+train_data <- training(data_split)
+test_data  <- testing(data_split)
+
+# CV folds
+cv_folds <- vfold_cv(train_data, v = 5)
+
+# recipe
+cdi_recipe <- recipe(HighBurden ~ ., data = train_data) |>
+  update_role(State, new_role = "ID") |>
+  step_naomit(all_predictors()) |>
+  step_normalize(all_numeric_predictors()) |>
+  step_dummy(all_nominal_predictors())
+```
+
+```{r}
+# model spec
+lasso_spec <- logistic_reg(
+  penalty = tune(),
+  mixture = tune()
+) |>
+  set_engine("glmnet") |>
+  set_mode("classification")
+
+# grid
+lasso_grid <- grid_regular(
+  penalty(),
+  mixture(),
+  levels = 5
+)
+
+# workflow
+lasso_wflow <- workflow() |>
+  add_recipe(cdi_recipe) |>
+  add_model(lasso_spec)
+
+# CV tuning
+lasso_fit <- lasso_wflow |>
+  tune_grid(
+    grid = lasso_grid,
+    resamples = cv_folds
+  )
+
+# metrics
+lasso_fit |>
+  collect_metrics() |>
+  filter(.metric == "roc_auc")
+
+# best params
+best_lasso <- select_best(lasso_fit, metric = "roc_auc")
+
+# final workflow
+final_lasso_wflow <- lasso_wflow |>
+  finalize_workflow(best_lasso)
+
+# final fit
+final_lasso_fit <- final_lasso_wflow |>
+  fit(data = train_data)
+```
