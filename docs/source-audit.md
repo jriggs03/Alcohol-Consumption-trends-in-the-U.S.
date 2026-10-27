@@ -14,7 +14,7 @@ Both saved CSV input extracts contain 50,000 data rows, counted with a CSV parse
 - Younger adults had higher odds of binge drinking.
 - State-level associations between poorer general health/lower income and alcohol-related deaths.
 
-These qualitative findings are reported as project findings. Effect sizes, uncertainty, and model performance cannot be reconstructed from the available summary alone. The poster intentionally contains no invented empirical charts or numeric performance results.
+These qualitative findings are reported as project findings. Effect sizes, uncertainty, and model performance cannot be reconstructed from the available summary alone.
 
 ## What the code supports
 
@@ -36,4 +36,4 @@ These qualitative findings are reported as project findings. Effect sizes, uncer
 
 ## Publication scope
 
-Only the existing public Quarto sources, research documentation, and a newly prepared summary poster are used. Raw extracts, caches, and private generated HTML remain unpublished. Teammate attribution is retained. Chronic liver disease is not equated with alcohol-attributable death.
+Only the existing public Quarto sources and research documentation are published. Raw extracts, caches, and private generated HTML remain unpublished. Teammate attribution is retained. Chronic liver disease is not equated with alcohol-attributable death.

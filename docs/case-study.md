@@ -22,6 +22,6 @@ James Riggs presented the team project to Cal Poly Statistics faculty. The work 
 
 ## Artifacts
 
-[Website case study](https://jriggs03.github.io/stat551.html) · [New portfolio poster](../poster/stat551-poster.pdf) · [Source audit](source-audit.md)
+[Website case study](https://jriggs03.github.io/stat551.html) · [Source audit](source-audit.md)
 
-The poster is a newly prepared summary, not the original presentation. State-level results do not establish individual risk or causation; chronic liver disease mortality is broader than alcohol-attributable mortality.
+State-level results do not establish individual risk or causation; chronic liver disease mortality is broader than alcohol-attributable mortality.
