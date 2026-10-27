@@ -2,9 +2,9 @@
 
 **Applied Statistical Research Project · STAT 551 · Cal Poly Statistics**
 
-A team statistical learning project exploring demographic and health patterns associated with binge drinking, alongside state-level alcohol-related health indicators. James Riggs presented the work to Cal Poly Statistics faculty.
+A team statistical learning project exploring demographic and health patterns associated with binge drinking, alongside state-level alcohol-related health indicators. By **Jose Garcia and James Riggs**. James Riggs presented the work to Cal Poly Statistics faculty.
 
-[Read the case study](https://jriggs03.github.io/stat551.html)
+[Read the case study](https://jriggs03.github.io/stat551.html) · [Original research poster (PDF)](poster/stat551-poster.pdf)
 
 ## Problem and data
 
@@ -17,16 +17,22 @@ The two analyses have different units of observation; state-level associations a
 
 R, tidyverse, tidymodels, glmnet, ranger, Quarto. Sources include regularized logistic regression, a teammate random-forest specification, five-fold cross-validation, and ROC AUC tuning. James's state-level workflow joins aggregated BRFSS measures to USCDI by state.
 
-## Reported findings
+## Findings reported in the original poster
 
-The project summary reports higher odds of binge drinking among younger adults, and state-level associations between poorer general health/lower income and alcohol-related deaths. These are qualitative reported findings, not independently reproduced results. No verified coefficient tables, uncertainty intervals, or held-out model metrics are available here.
+- Adults aged 18-34 had the highest binge-drinking rates; adults 55+ had lower rates.
+- More days of poor mental health were associated with a higher likelihood of binge drinking; lower education and income were associated with slightly higher risk.
+- Higher state binge-drinking rates and lower state income/education were associated with greater mortality burden. The conclusion also reports poorer general health in higher-burden areas.
+- Associations with smoking and exercise weakened after age was included.
 
-Chronic liver disease mortality in one source is broader than alcohol-attributable mortality. These observational analyses do not establish causation.
+The original poster contains age-group, mental-health, random-forest importance, and state-burden plots. These findings are taken from the presented artifact, not a fresh model rerun. No unreported coefficients, uncertainty intervals, or held-out model metrics are added.
+
+The poster describes elastic net and random forest at the individual level, and elastic net for a state-level high-burden outcome defined by the top 25% of liver mortality. Chronic liver disease mortality is broader than alcohol-attributable mortality. These observational analyses do not establish causation.
 
 ## Files and attribution
 
 - `Classification_project(James).qmd`: James Riggs's original course-era analysis.
-- `Jose.qmd`: teammate analysis, retained with attribution; this is team work.
+- `Jose.qmd`: Jose Garcia’s analysis, retained with attribution; this is team work.
+- `poster/stat551-poster.pdf`: original faculty-presentation poster supplied by James, published unchanged.
 - `docs/source-audit.md`: provenance, known code issues, and reproduction requirements.
 - `docs/case-study.md`: research summary and presentation context.
 

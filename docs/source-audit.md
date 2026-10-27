@@ -1,20 +1,22 @@
 # Source notes and reproducibility
 
-Reviewed October 27, 2026. This document distinguishes available source evidence from the project summary supplied by James.
+Reviewed October 27, 2026. This document distinguishes the original presented poster, saved code, and project context supplied by James.
 
 ## Available evidence
 
-The public repository contains two course-era Quarto sources. A locally available copy of the private original also contains survey extracts, rendered HTML, cached R objects, and exploratory plots. The inspected HTML does not supply final coefficient/performance tables. No original faculty slide deck or final report was located in the inspected project folders or Downloads inventory.
+The public repository contains two course-era Quarto sources. A locally available copy of the private original also contains survey extracts, rendered HTML, cached R objects, and exploratory plots. The inspected HTML does not supply final coefficient/performance tables. James subsequently supplied the original presentation poster, now preserved unchanged at `poster/stat551-poster.pdf`. It is titled *Alcohol Consumption Trends in the United States* and credits Jose Garcia and James Riggs. The poster contains plotted results but no held-out performance table or coefficient/uncertainty table.
 
 Both saved CSV input extracts contain 50,000 data rows, counted with a CSV parser. James's supplied project summary describes approximately 21,500 USCDI records; the exact filtering stage is unverified. Do not use that number as a verified final model sample size.
 
-## What comes from the supplied project summary
+## Evidence from the original poster
 
-- Presentation to Cal Poly Statistics faculty.
-- Younger adults had higher odds of binge drinking.
-- State-level associations between poorer general health/lower income and alcohol-related deaths.
+The original poster describes two pipelines: individual-level elastic net and random forest, and state-level elastic net using a top-quartile liver-mortality burden outcome. It includes age-group binge-drinking rates, a mental-health comparison, random-forest feature importance, and a state burden map.
 
-These qualitative findings are reported as project findings. Effect sizes, uncertainty, and model performance cannot be reconstructed from the available summary alone.
+Reported findings include higher binge-drinking rates among adults 18-34, lower rates among adults 55+, associations with poor mental health, income and education, and state-level mortality-burden patterns. Associations with smoking and exercise weakened after age was included. The conclusion reports poorer general health/lower income in higher-burden areas. These are findings reported by the presented artifact, not independently rerun estimates.
+
+The poster itself emphasizes self-report, sampling, cross-sectional limitations, and association rather than causation. Its mortality terminology should be read alongside its liver-mortality target: chronic liver disease is broader than alcohol-attributable mortality.
+
+The faculty-presentation context and approximately 21,500-record USCDI scope were supplied by James; the poster does not state that record count. No additional numeric effect sizes or performance results have been inferred from the plots.
 
 ## What the code supports
 
@@ -36,4 +38,4 @@ These qualitative findings are reported as project findings. Effect sizes, uncer
 
 ## Publication scope
 
-Only the existing public Quarto sources and research documentation are published. Raw extracts, caches, and private generated HTML remain unpublished. Teammate attribution is retained. Chronic liver disease is not equated with alcohol-attributable death.
+The existing public Quarto sources, research documentation, and original poster supplied by James are published. The poster PDF is preserved byte-for-byte; the generated portfolio summary poster is not linked or used. Raw extracts, caches, and private generated HTML remain unpublished. Teammate attribution is retained. Chronic liver disease is not equated with alcohol-attributable death.
